@@ -9,6 +9,7 @@ public abstract class Controller {
 
 	public abstract double getControlValue();
 	public abstract double getErrorValue();
+	public abstract double getPlanValue();
 	public abstract void forwardTo(double t) throws IllegalStateException;
 	public abstract double getCurrentTime();
 }

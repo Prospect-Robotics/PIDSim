@@ -73,4 +73,9 @@ public class PIDController extends Controller {
 		return lastError;
 	}
 
+	@Override
+	public double getPlanValue() {
+		return getDesiredValue(currentTime);
+	}
+
 }

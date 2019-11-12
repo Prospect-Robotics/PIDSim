@@ -26,16 +26,18 @@ public class Simulation {
 	double samples[];
 	double controls[];
 	double errors[];
+	double plans[];
 
 	public Simulation(int n, double factorP, double factorI, double factorD, double m, double f, double velocity) {
 		mc = new ArrayList<ModelController>();
 		samples = new double[n];
 		controls = new double[n];
 		errors = new double[n];
+		plans = new double[n];
 	
 		StateModel model = new SimpleMass(m, f, velocity, 0);
-		//MotionPlan plan = new LinearMotion(2);
-		MotionPlan plan = new SquareWavePlan(5, 2);
+		MotionPlan plan = new LinearMotion(2, 1, 5);
+		//MotionPlan plan = new SquareWavePlan(10, 2);
 		PIDController controller = new PIDController(factorP, factorI, factorD, 0);
 		model.setController(controller);
 		controller.setStateModel(model);
@@ -70,6 +72,7 @@ public class Simulation {
 				samples[time_index] = m.getCurrentValue();
 				controls[time_index] = c.getControlValue();
 				errors[time_index] = c.getErrorValue();
+				plans[time_index] = c.getPlanValue();
 			}
 		}
 

@@ -147,6 +147,9 @@ public class SimUI implements Runnable {
 		double control[];
 		double maxControl;
 		double minControl;
+		double plan[];
+		double maxPlan;
+		double minPlan;
 
 		SimCanvas(double d[]) {
 			setData(d);
@@ -171,6 +174,7 @@ public class SimUI implements Runnable {
 			}
 			repaint();
 		}
+
 		void setControl(double c[]) {
 			control = c;
 			if (control == null)
@@ -191,6 +195,26 @@ public class SimUI implements Runnable {
 			repaint();
 		}
 
+		void setPlan(double p[]) {
+			plan = p;
+			if (plan == null)
+				return;
+			if (plan.length > 0) {
+				maxPlan = plan[0];
+				minPlan = plan[0];
+			} else {
+				maxControl = 0;
+				minControl = 0;
+			}
+			for(double v : plan) {
+				if (v > maxPlan)
+					maxPlan = v;
+				if (v < minPlan)
+					minPlan = v;
+			}
+			repaint();
+		}
+
 		@Override
 		public void paintComponent(Graphics g) {
 			final int margin = 7;
@@ -201,9 +225,11 @@ public class SimUI implements Runnable {
 			if (data == null)
 				return;
 			g.setColor(Color.gray);
-			double scale = (height - 2.0 * margin) / (maxData - minData);
-			int zero = height - 1 - margin - (int)(scale * (0.0 - minData));
-			int ten = height - 1 - margin - (int)(scale * (10.0 - minData));
+			double rangeMax = maxPlan > maxData ? maxPlan : maxData;
+			double rangeMin = minPlan < minData ? minPlan : minData;
+			double scale = (height - 2.0 * margin) / (rangeMax - rangeMin);
+			int zero = height - 1 - margin - (int)(scale * (0.0 - rangeMin));
+			int ten = height - 1 - margin - (int)(scale * (10.0 - rangeMin));
 			g.drawString( "0.0", 5,zero - 5);
 			g.drawLine(0, zero, width, zero);
 			g.drawString( "10.0", 5,ten + 15);
@@ -211,7 +237,17 @@ public class SimUI implements Runnable {
 			g.setColor(Color.blue);
 			int prevY = 0;
 			for(int i = 0; i < width && i < data.length; i++) {
-				int y = height - 1 - margin - (int)(scale * (data[i] - minData));
+				int y = height - 1 - margin - (int)(scale * (data[i] - rangeMin));
+				if (i == 0)
+					g.drawLine(i, y,  i,  y);
+				else
+					g.drawLine(i - 1, prevY,  i,  y);
+				prevY = y;
+			}
+			g.setColor(Color.green);
+			prevY = 0;
+			for(int i = 0; i < width && i < plan.length; i++) {
+				int y = height - 1 - margin - (int)(scale * (plan[i] - rangeMin));
 				if (i == 0)
 					g.drawLine(i, y,  i,  y);
 				else
@@ -309,6 +345,7 @@ public class SimUI implements Runnable {
 				sim.run();
 				simCanvas.setData(sim.samples);
 				simCanvas.setControl(sim.controls);
+				simCanvas.setPlan(sim.plans);
 			}
 		};
 		button.addActionListener(al);
