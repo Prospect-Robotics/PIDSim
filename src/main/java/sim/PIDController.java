@@ -7,25 +7,27 @@ public class PIDController extends Controller {
 	private double pScale;
 	private double dScale;
 	private double desiredValue;
+	private double maxMagnitude;
 	private double controlValue;
 	private double lastError;
 	private double accumulatedError;
 	private boolean firstInterval;
-	
-	public PIDController(double p, double i, double d, double startTime)
+
+	public PIDController(double p, double i, double d, double max_mag, double startTime)
 	{
 		pScale = p;
 		iScale = i;
 		dScale = d;
+		maxMagnitude = max_mag;
 		currentTime = startTime;
 		firstInterval = true;
 	}
-	
+
 	public void setDesiredValue(double d)
 	{
 		desiredValue = d;
 	}
-	
+
 	private double getDesiredValue(double t) {
 		if (motionPlan != null) {
 			return motionPlan.getDesiredPosition(t);
@@ -33,11 +35,11 @@ public class PIDController extends Controller {
 			return desiredValue;
 		}
 	}
-	
+
 	public void setMotionPlan(MotionPlan p) {
 		motionPlan = p;
 	}
-	
+
 	@Override
 	public double getControlValue() {
 		return controlValue;
@@ -55,10 +57,15 @@ public class PIDController extends Controller {
 			controlValue += (error - lastError) * dScale / dt;
 		}
 		firstInterval = false;
-		
+
 		accumulatedError += error * dt;
 		controlValue += accumulatedError * iScale;
-		
+
+		if (controlValue > maxMagnitude)
+			controlValue = maxMagnitude;
+		else if (controlValue < -maxMagnitude)
+			controlValue = -maxMagnitude;
+
 		lastError = error;
 		currentTime = t;
 	}

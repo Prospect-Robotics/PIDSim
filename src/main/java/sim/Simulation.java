@@ -28,7 +28,7 @@ public class Simulation {
 	double errors[];
 	double plans[];
 
-	public Simulation(int n, double factorP, double factorI, double factorD, double m, double f, double velocity) {
+	public Simulation(int n, double factorP, double factorI, double factorD, double m, double f, double velocity, MotionPlan plan) {
 		mc = new ArrayList<ModelController>();
 		samples = new double[n];
 		controls = new double[n];
@@ -36,12 +36,10 @@ public class Simulation {
 		plans = new double[n];
 	
 		StateModel model = new SimpleMass(m, f, velocity, 0);
-		MotionPlan plan = new LinearMotion(2, 1, 5);
-		//MotionPlan plan = new SquareWavePlan(10, 2);
-		PIDController controller = new PIDController(factorP, factorI, factorD, 0);
+		PIDController controller = new PIDController(factorP, factorI, factorD, 500, 0);
 		model.setController(controller);
 		controller.setStateModel(model);
-		//controller.setDesiredValue(10);
+		controller.setDesiredValue(10);
 		controller.setMotionPlan(plan);
 		ModelController v = new ModelController(model, controller);
 		addModelController(v);

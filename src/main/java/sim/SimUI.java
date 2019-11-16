@@ -15,7 +15,9 @@ import java.io.StringWriter;
 
 import javax.swing.BoundedRangeModel;
 import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -33,6 +35,7 @@ public class SimUI implements Runnable {
 	DefaultBoundedRangeModel dModel;
 	DefaultBoundedRangeModel massModel;
 	DefaultBoundedRangeModel frictionModel;
+	DefaultComboBoxModel<String> cbm;
 	SimCanvas simCanvas;
 
 	private static final class TxtToModel implements KeyListener, FocusListener {
@@ -46,12 +49,12 @@ public class SimUI implements Runnable {
 
 		@Override
 		public void keyPressed(KeyEvent ke) {
-			// Ignore			
+			// Ignore
 		}
 
 		@Override
 		public void keyReleased(KeyEvent ke) {
-			// Ignore			
+			// Ignore
 		}
 
 		private void updateModel() {
@@ -64,7 +67,7 @@ public class SimUI implements Runnable {
 				txt.setText(val2String(model.getValue()));
 			}
 		}
-		
+
 		@Override
 		public void keyTyped(KeyEvent ke) {
 			if (ke.getKeyChar() == KeyEvent.VK_ENTER) {
@@ -75,7 +78,6 @@ public class SimUI implements Runnable {
 		@Override
 		public void focusGained(FocusEvent arg0) {
 			// Ignore
-			
 		}
 
 		@Override
@@ -83,12 +85,12 @@ public class SimUI implements Runnable {
 			updateModel();
 		}
 	}
-	
+
 	@SuppressWarnings("serial")
 	static final class SliderInput extends JPanel {
-		
+
 		private BoundedRangeModel model;
-		
+
 		SliderInput(String label, BoundedRangeModel m) {
 			super(new GridBagLayout());
 			model = m;
@@ -96,7 +98,7 @@ public class SimUI implements Runnable {
 			GridBagConstraints gbc = new GridBagConstraints();
 			gbc.fill = GridBagConstraints.HORIZONTAL;
 			GridBagConstraints gbc1;
-			
+
 			JLabel lab = new JLabel(label);
 			gbc1 = (GridBagConstraints)gbc.clone();
 			gbc1.gridx = 0;
@@ -109,8 +111,7 @@ public class SimUI implements Runnable {
 			gbc1.gridy = 0;
 			gbc1.weightx = 1.0;
 			this.add(slider, gbc1);
-			
-			
+
 			JTextField txt = new JTextField("", 4);
 			TxtToModel t2m = new TxtToModel(txt, model);
 			txt.addKeyListener(t2m);
@@ -154,7 +155,7 @@ public class SimUI implements Runnable {
 		SimCanvas(double d[]) {
 			setData(d);
 		}
-		
+
 		void setData(double d[]) {
 			data = d;
 			if (data == null)
@@ -254,7 +255,7 @@ public class SimUI implements Runnable {
 					g.drawLine(i - 1, prevY,  i,  y);
 				prevY = y;
 			}
-			
+
 			scale = (height - 2.0 * margin) / (maxControl - minControl);
 			g.setColor(Color.red);
 			prevY = 0;
@@ -275,10 +276,12 @@ public class SimUI implements Runnable {
 		dModel = new DefaultBoundedRangeModel(80, 0, 0, 999);
 		massModel = new DefaultBoundedRangeModel(20, 0, 1, 999); // Must be non-zero to avoid division by zero problems.
 		frictionModel = new DefaultBoundedRangeModel(0, 0, 0, 999);
-		
+		String modelChoices[] = {"Go to 10", "Ramp to 10", "Square wave"};
+		cbm = new DefaultComboBoxModel<String>(modelChoices);
+
 		data = d;
 	}
-	
+
 	static String val2String(int v) {
 		StringWriter sw = new StringWriter(10);
 		PrintWriter pw = new PrintWriter(sw);
@@ -286,7 +289,7 @@ public class SimUI implements Runnable {
 		pw.flush();
 		return sw.toString();
 	}
-	
+
 	@Override
 	public void run() {
 		JFrame mainFrame = new JFrame("Main UI");
@@ -297,7 +300,7 @@ public class SimUI implements Runnable {
 		GridBagConstraints gbc1;
 		mainFrame.setLayout(gb);
 		mainFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-		
+
 		SliderInput inputP = new SliderInput(" P: ", pModel);
 		gbc1 = (GridBagConstraints)gbc.clone();
 		gbc1.gridx = 0;
@@ -329,25 +332,45 @@ public class SimUI implements Runnable {
 		gbc1.gridy = 1;
 		mainFrame.add(inputFriction, gbc1);
 
-		
+		JComboBox<String> modelChooser = new JComboBox<String>(cbm);
+		gbc1 = (GridBagConstraints)gbc.clone();
+		gbc1.gridx = 2;
+		gbc1.gridy = 1;
+		mainFrame.add(modelChooser, gbc1);
+
 		JButton button = new JButton("Regenerate");
 		ActionListener al = new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				System.out.println("Button Pressed!");
-				
+
 				double p = (double)pModel.getValue() / 10.0;
 				double i = (double)iModel.getValue() / 10.0;
 				double d = (double)dModel.getValue() / 10.0;
 				double mass = (double)massModel.getValue() / 10.0;
 				double friction = (double)frictionModel.getValue() / 10.0;
-				Simulation sim = new Simulation(1000, p, i, d, mass, friction, 0.0);
+
+				int modelIndex = cbm.getIndexOf(cbm.getSelectedItem());
+				MotionPlan plan;
+				switch (modelIndex) {
+				case 1:
+					plan = new LinearMotion(2, 1, 5);
+					break;
+				case 2:
+					plan = new SquareWavePlan(10, 2);
+					break;
+				default:
+					plan = null;
+					break;
+				}
+				Simulation sim = new Simulation(1000, p, i, d, mass, friction, 0.0, plan);
 				sim.run();
 				simCanvas.setData(sim.samples);
 				simCanvas.setControl(sim.controls);
 				simCanvas.setPlan(sim.plans);
 			}
 		};
+
 		button.addActionListener(al);
 		gbc1 = (GridBagConstraints)gbc.clone();
 		gbc1.gridx = 3;
@@ -367,14 +390,9 @@ public class SimUI implements Runnable {
 		mainFrame.setSize(1010, 500);
 		al.actionPerformed(null);
 		mainFrame.setVisible(true);
-
 	}
 
 	public static void main(String[] args) {
-		
 		SwingUtilities.invokeLater(new SimUI(null));
-		
 	}
-
-
 }
