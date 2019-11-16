@@ -22,7 +22,7 @@ public class Simulation {
 		}
 	}
 
-	List<ModelController> mc;
+	private List<ModelController> mc;
 	double samples[];
 	double controls[];
 	double errors[];

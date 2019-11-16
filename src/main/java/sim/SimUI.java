@@ -30,13 +30,13 @@ import javax.swing.event.ChangeListener;
 
 public class SimUI implements Runnable {
 	double data[];
-	DefaultBoundedRangeModel pModel;
-	DefaultBoundedRangeModel iModel;
-	DefaultBoundedRangeModel dModel;
-	DefaultBoundedRangeModel massModel;
-	DefaultBoundedRangeModel frictionModel;
-	DefaultComboBoxModel<String> cbm;
-	SimCanvas simCanvas;
+	private DefaultBoundedRangeModel pModel;
+	private DefaultBoundedRangeModel iModel;
+	private DefaultBoundedRangeModel dModel;
+	private DefaultBoundedRangeModel massModel;
+	private DefaultBoundedRangeModel frictionModel;
+	private DefaultComboBoxModel<String> cbm;
+	private SimCanvas simCanvas;
 
 	private static final class TxtToModel implements KeyListener, FocusListener {
 		private final JTextField txt;
@@ -89,11 +89,8 @@ public class SimUI implements Runnable {
 	@SuppressWarnings("serial")
 	static final class SliderInput extends JPanel {
 
-		private BoundedRangeModel model;
-
 		SliderInput(String label, BoundedRangeModel m) {
 			super(new GridBagLayout());
-			model = m;
 
 			GridBagConstraints gbc = new GridBagConstraints();
 			gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -105,7 +102,7 @@ public class SimUI implements Runnable {
 			gbc1.gridy = 0;
 			this.add(lab, gbc1);
 
-			JSlider slider = new JSlider(model);
+			JSlider slider = new JSlider(m);
 			gbc1 = (GridBagConstraints)gbc.clone();
 			gbc1.gridx = 1;
 			gbc1.gridy = 0;
@@ -113,12 +110,12 @@ public class SimUI implements Runnable {
 			this.add(slider, gbc1);
 
 			JTextField txt = new JTextField("", 4);
-			TxtToModel t2m = new TxtToModel(txt, model);
+			TxtToModel t2m = new TxtToModel(txt, m);
 			txt.addKeyListener(t2m);
 			txt.addFocusListener(t2m);
-			ModelToTxt m2t = new ModelToTxt(txt, model);
+			ModelToTxt m2t = new ModelToTxt(txt, m);
 			m2t.stateChanged(null); // dummy event to set the initial text.
-			model.addChangeListener(m2t);
+			m.addChangeListener(m2t);
 			gbc1 = (GridBagConstraints)gbc.clone();
 			gbc1.gridx = 2;
 			gbc1.gridy = 0;
@@ -226,8 +223,8 @@ public class SimUI implements Runnable {
 			if (data == null)
 				return;
 			g.setColor(Color.gray);
-			double rangeMax = maxPlan > maxData ? maxPlan : maxData;
-			double rangeMin = minPlan < minData ? minPlan : minData;
+			double rangeMax = Math.max(maxPlan, maxData);
+			double rangeMin = Math.min(minPlan, minData);
 			double scale = (height - 2.0 * margin) / (rangeMax - rangeMin);
 			int zero = height - 1 - margin - (int)(scale * (0.0 - rangeMin));
 			int ten = height - 1 - margin - (int)(scale * (10.0 - rangeMin));
@@ -332,7 +329,7 @@ public class SimUI implements Runnable {
 		gbc1.gridy = 1;
 		mainFrame.add(inputFriction, gbc1);
 
-		JComboBox<String> modelChooser = new JComboBox<String>(cbm);
+		JComboBox<String> modelChooser = new JComboBox<>(cbm);
 		gbc1 = (GridBagConstraints)gbc.clone();
 		gbc1.gridx = 2;
 		gbc1.gridy = 1;
